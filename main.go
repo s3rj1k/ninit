@@ -105,19 +105,25 @@ func run(c *config.Config, wg *sync.WaitGroup) error {
 		return err
 	}
 
+	log.Printf("started process '%v' with PID '%d'\n", cmd.String(), cmd.Process.Pid)
+
 	watch := watch.Path(ctx, wg, c.WatchPath, c.WatchInterval)
 	reap := reaper.Run(ctx, wg)
 
 	wg.Add(1)
 
 	go func() {
-		sendSignal := func(sig syscall.Signal) {
+		sendSignal := func(pid int, sig syscall.Signal) {
 			// forward signal to main process and all children
-			if err := syscall.Kill(-cmd.Process.Pid, sig); err != nil {
+			if err := syscall.Kill(pid, sig); err != nil {
 				if err != syscall.ESRCH { // no such process
 					log.Printf("%v\n", err)
 				}
+
+				return
 			}
+
+			log.Printf("sent '%v' signal to PID '%d'\n", sig, pid)
 		}
 
 		for {
@@ -134,7 +140,7 @@ func run(c *config.Config, wg *sync.WaitGroup) error {
 				// log.Printf("received OS signal %v\n", sig) // can be very verbose
 
 				if v, ok := sig.(syscall.Signal); ok {
-					sendSignal(v)
+					sendSignal(-cmd.Process.Pid, v)
 				}
 
 			case v := <-watch:
@@ -147,7 +153,7 @@ func run(c *config.Config, wg *sync.WaitGroup) error {
 				}
 
 				if v.IsChanged {
-					sendSignal(c.ReloadSignal)
+					sendSignal(-cmd.Process.Pid, c.ReloadSignal)
 				}
 
 			case v := <-reap:
