@@ -43,18 +43,18 @@ func Help(prefix, name, version, buildTime string) {
 		Build Time: %BUILD_TIME%
 
 	Avaliable envars configuration options:
-		- %PREFIX%COMMAND_ARGS
+		- %PREFIX%COMMAND_PATH
 				path to executable [required]
+		- %PREFIX%COMMAND_ARGS
+				command arguments
+		- %PREFIX%WORK_DIRECTORY_PATH
+				path to application new current working directory
 		- %PREFIX%RELOAD_SIGNAL
 				OS signal what triggers application config reload [default 'SIGHUP']
 		- %PREFIX%WATCH_INTERVAL
 				watch (type: pulling) time interval [default '3s']
 		- %PREFIX%WATCH_PATH
 				file or directory path to watch (type: pulling) file changes recursevely
-		- %PREFIX%WORK_DIRECTORY_PATH
-				path to application new current working directory
-		- %PREFIX%COMMAND_PATH
-				command arguments
 	`
 	if name == "" {
 		name = filepath.Base(os.Args[0])
