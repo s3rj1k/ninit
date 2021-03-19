@@ -2,8 +2,6 @@ package version
 
 import (
 	_ "embed"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -32,10 +30,4 @@ func GetVersion() string {
 // GetVersion returns embedded build time.
 func GetBuildTime() string {
 	return dataOrUnknown(buildTime)
-}
-
-// GetApplicationName just a conviniece wrapper
-// to get running application base name.
-func GetApplicationName() string {
-	return filepath.Base(os.Args[0])
 }

@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
@@ -35,6 +34,7 @@ type Config struct {
 	// contains application specific prefix for environment variables
 	EnvPrefix string
 
+	// package level logger
 	Log logger.Logger
 }
 
@@ -63,7 +63,7 @@ func Help(prefix, name, version, buildTime string) string {
 				file or directory path to watch (type: pulling) file changes recursevely
 	`
 	if name == "" {
-		name = filepath.Base(os.Args[0])
+		name = GetApplicationName()
 	}
 
 	if version == "" {
