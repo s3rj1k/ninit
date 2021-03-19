@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/s3rj1k/ninit/pkg/logger"
 	"github.com/s3rj1k/ninit/pkg/signals"
 	"github.com/s3rj1k/ninit/pkg/utils"
 )
@@ -16,7 +17,7 @@ import (
 // Specifies default prefixes for environment variables and logs.
 const (
 	DefaultEnvPrefix = "INIT_"
-	DefaultLogPrefix = "init: "
+	DefaultLogPrefix = "init "
 )
 
 // Config contains application configuration.
@@ -33,10 +34,12 @@ type Config struct {
 
 	// contains application specific prefix for environment variables
 	EnvPrefix string
+
+	Log logger.Logger
 }
 
 // Help prints user-friendly help with available configuration options.
-func Help(prefix, name, version, buildTime string) {
+func Help(prefix, name, version, buildTime string) string {
 	text := `
 	Application:
 		Name: %NAME%
@@ -79,7 +82,7 @@ func Help(prefix, name, version, buildTime string) {
 		"%BUILD_TIME%", buildTime,
 	)
 
-	fmt.Println(r.Replace(strings.TrimPrefix(text, "\n")))
+	return r.Replace(strings.TrimPrefix(text, "\n"))
 }
 
 // setCommandPath reads command path from `prefix + COMMAND_PATH` env.
@@ -235,37 +238,42 @@ func validateEnvPrefix(prefix string) error {
 	return nil
 }
 
-// Get returns validated configuration object filled with default values or from environment variables.
-func Get(prefix string) (*Config, error) {
-	c := new(Config)
+// New creates new empty config with configured logger.
+func New(log logger.Logger) *Config {
+	return &Config{
+		Log: log,
+	}
+}
 
+// Get reads environment variables to update and validate configuration object, also sets default values when needed.
+func (c *Config) Get(prefix string) error {
 	if err := validateEnvPrefix(prefix); err != nil {
-		return nil, err
+		return err
 	}
 
 	c.EnvPrefix = prefix
 
 	if err := c.setCommandPath(prefix); err != nil {
-		return nil, err
+		return err
 	}
 	if err := c.setCommandArgs(prefix); err != nil {
-		return nil, err
+		return err
 	}
 	if err := c.setWorkingDirectory(prefix); err != nil {
-		return nil, err
+		return err
 	}
 	if err := c.setWatchPath(prefix); err != nil {
-		return nil, err
+		return err
 	}
 	if err := c.setWatchInterval(prefix); err != nil {
-		return nil, err
+		return err
 	}
 	if err := c.setReloadSignal(prefix); err != nil {
-		return nil, err
+		return err
 	}
 	if err := c.setReloadSignalToPGID(prefix); err != nil {
-		return nil, err
+		return err
 	}
 
-	return c, nil
+	return nil
 }

@@ -10,17 +10,23 @@ import (
 	"time"
 )
 
+// Message describes output from reaper.Path function.
+type Message struct {
+	Error   error
+	Message string
+}
+
 // Run starts goroutine that will reap zombie processes when appropriate signal is sent.
-func Run(ctx context.Context, wg *sync.WaitGroup) <-chan string {
-	out := make(chan string, 1)
+func Run(ctx context.Context, wg *sync.WaitGroup) <-chan Message {
+	out := make(chan Message, 1)
 
 	wg.Add(1)
 
-	go func(ctx context.Context, ch chan<- string) {
+	go func(ctx context.Context, ch chan<- Message) {
 		notify := make(chan os.Signal, 1)
 		signal.Notify(notify, syscall.SIGCHLD)
 
-		defer func(wg *sync.WaitGroup, notify chan<- os.Signal, ch chan<- string) {
+		defer func(wg *sync.WaitGroup, notify chan<- os.Signal, ch chan<- Message) {
 			// defer inside goroutine works because we return when context is done
 			signal.Stop(notify)
 			close(ch)
@@ -42,7 +48,9 @@ func Run(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 
 					if syscall.ECHILD == err {
 						// no un-reaped child(ren) exist
-						ch <- "reaper cleanup: no (more) zombies found"
+						ch <- Message{
+							Message: "reaper cleanup: no (more) zombies found",
+						}
 
 						break
 					}
@@ -53,10 +61,14 @@ func Run(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 						time.Sleep(250 * time.Millisecond)
 					case pid == -1:
 						// error from syscall
-						ch <- fmt.Sprintf("reaper error: %v", err)
+						ch <- Message{
+							Error: fmt.Errorf("reaper error: %w", err),
+						}
 					case pid > 0:
 						// child was reaped
-						ch <- fmt.Sprintf("reaper cleanup: pid=%d, status=%+v", pid, status)
+						ch <- Message{
+							Message: fmt.Sprintf("reaper cleanup: pid=%d, status=%+v", pid, status),
+						}
 					}
 
 					select {
