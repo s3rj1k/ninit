@@ -18,3 +18,4 @@ COPY zombie /zombie
 ENV INIT_COMMAND_PATH="/usr/sbin/dnsmasq"
 ENV INIT_COMMAND_ARGS="--no-daemon --user=root"
 ENV INIT_WATCH_PATH="/etc/"
+#ENV INIT_RELOAD_SIGNAL_TO_PGID="true"

@@ -25,8 +25,9 @@ type Config struct {
 	WatchPath     string
 	WorkDirectory string
 
-	ReloadSignal  syscall.Signal
-	WatchInterval time.Duration
+	ReloadSignal       syscall.Signal
+	ReloadSignalToPGID bool
+	WatchInterval      time.Duration
 
 	CommandArgs []string
 
@@ -51,6 +52,8 @@ func Help(prefix, name, version, buildTime string) {
 				path to application new current working directory
 		- %PREFIX%RELOAD_SIGNAL
 				OS signal what triggers application config reload [default 'SIGHUP']
+		- %PREFIX%RELOAD_SIGNAL_TO_PGID
+				Send reload signal to PGID instead of PID
 		- %PREFIX%WATCH_INTERVAL
 				watch (type: pulling) time interval [default '3s']
 		- %PREFIX%WATCH_PATH
@@ -190,6 +193,18 @@ func (c *Config) setWatchInterval(prefix string) error {
 	return nil
 }
 
+// setReloadSignalToPGID reads reload signal to PGID from `prefix + RELOAD_SIGNAL_TO_PGID` env.
+func (c *Config) setReloadSignalToPGID(prefix string) error {
+	env := prefix + "RELOAD_SIGNAL_TO_PGID"
+	val := strings.TrimSpace(os.Getenv(env))
+
+	if strings.EqualFold(val, "true") || strings.EqualFold(val, "yes") || strings.EqualFold(val, "1") {
+		c.ReloadSignalToPGID = true
+	}
+
+	return nil
+}
+
 // setReloadSignal reads reload signal from `prefix + RELOAD_SIGNAL` env.
 func (c *Config) setReloadSignal(prefix string) error {
 	env := prefix + "RELOAD_SIGNAL"
@@ -246,6 +261,9 @@ func Get(prefix string) (*Config, error) {
 		return nil, err
 	}
 	if err := c.setReloadSignal(prefix); err != nil {
+		return nil, err
+	}
+	if err := c.setReloadSignalToPGID(prefix); err != nil {
 		return nil, err
 	}
 

@@ -122,8 +122,6 @@ func run(c *config.Config, wg *sync.WaitGroup) error {
 
 				return
 			}
-
-			log.Printf("sent '%v' signal to PID '%d'\n", sig, pid)
 		}
 
 		for {
@@ -137,10 +135,10 @@ func run(c *config.Config, wg *sync.WaitGroup) error {
 					continue
 				}
 
-				// log.Printf("received OS signal %v\n", sig) // can be very verbose
-
 				if v, ok := sig.(syscall.Signal); ok {
 					sendSignal(-cmd.Process.Pid, v)
+
+					log.Printf("sent '%v' signal to PID '%d'\n", sig, -cmd.Process.Pid) // can be very verbose
 				}
 
 			case v := <-watch:
@@ -153,7 +151,15 @@ func run(c *config.Config, wg *sync.WaitGroup) error {
 				}
 
 				if v.IsChanged {
-					sendSignal(-cmd.Process.Pid, c.ReloadSignal)
+					var pid int = cmd.Process.Pid
+
+					if c.ReloadSignalToPGID {
+						pid = -cmd.Process.Pid
+					}
+
+					sendSignal(pid, c.ReloadSignal)
+
+					log.Printf("sent '%v' signal to PID '%d'\n", c.ReloadSignal, pid)
 				}
 
 			case v := <-reap:
