@@ -100,7 +100,13 @@ func Run(c *config.Config, wg *sync.WaitGroup) error {
 				}
 
 				if v, ok := sig.(syscall.Signal); ok {
-					sendSignal(-cmd.Process.Pid, v)
+					var pid = -cmd.Process.Pid
+
+					if c.SignalToDirectChildOnly {
+						pid = cmd.Process.Pid
+					}
+
+					sendSignal(pid, v)
 
 					c.Log.Debugf("sent '%v' signal to PID '%d'\n", sig, -cmd.Process.Pid) // can be very verbose
 				}
@@ -115,7 +121,7 @@ func Run(c *config.Config, wg *sync.WaitGroup) error {
 				}
 
 				if v.IsChanged {
-					var pid int = cmd.Process.Pid
+					var pid = cmd.Process.Pid
 
 					if c.ReloadSignalToPGID {
 						pid = -cmd.Process.Pid

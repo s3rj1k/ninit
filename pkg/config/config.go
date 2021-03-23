@@ -25,9 +25,11 @@ type Config struct {
 	WatchPath     string
 	WorkDirectory string
 
-	ReloadSignal       syscall.Signal
-	ReloadSignalToPGID bool
-	WatchInterval      time.Duration
+	SignalToDirectChildOnly bool // to PID instead of PGID
+	ReloadSignalToPGID      bool
+
+	ReloadSignal  syscall.Signal
+	WatchInterval time.Duration
 
 	CommandArgs []string
 
@@ -56,7 +58,11 @@ func Help(prefix, name, version, buildTime string) string {
 		- %PREFIX%RELOAD_SIGNAL
 				OS signal what triggers application config reload [default 'SIGHUP']
 		- %PREFIX%RELOAD_SIGNAL_TO_PGID
-				Send reload signal to PGID instead of PID
+				send reload signal to PGID instead of PID
+		- %PREFIX%SIGNAL_TO_DIRECT_CHILD_ONLY
+				signals (excluding reload signal) are only forwarded
+				to direct child and not to any of its descendants,
+				meaning signal is sent to PID instead of PGID
 		- %PREFIX%WATCH_INTERVAL
 				watch (type: pulling) time interval [default '3s']
 		- %PREFIX%WATCH_PATH
@@ -196,13 +202,25 @@ func (c *Config) setWatchInterval(prefix string) error {
 	return nil
 }
 
-// setReloadSignalToPGID reads reload signal to PGID from `prefix + RELOAD_SIGNAL_TO_PGID` env.
+// setReloadSignalToPGID reads bool value from `prefix + RELOAD_SIGNAL_TO_PGID` env.
 func (c *Config) setReloadSignalToPGID(prefix string) error {
 	env := prefix + "RELOAD_SIGNAL_TO_PGID"
 	val := strings.TrimSpace(os.Getenv(env))
 
 	if strings.EqualFold(val, "true") || strings.EqualFold(val, "yes") || strings.EqualFold(val, "1") {
 		c.ReloadSignalToPGID = true
+	}
+
+	return nil
+}
+
+// setSignalToDirectChildOnly reads bool value from `prefix + SIGNAL_TO_DIRECT_CHILD_ONLY` env.
+func (c *Config) setSignalToDirectChildOnly(prefix string) error {
+	env := prefix + "SIGNAL_TO_DIRECT_CHILD_ONLY"
+	val := strings.TrimSpace(os.Getenv(env))
+
+	if strings.EqualFold(val, "true") || strings.EqualFold(val, "yes") || strings.EqualFold(val, "1") {
+		c.SignalToDirectChildOnly = true
 	}
 
 	return nil
@@ -272,6 +290,9 @@ func (c *Config) Get(prefix string) error {
 		return err
 	}
 	if err := c.setReloadSignalToPGID(prefix); err != nil {
+		return err
+	}
+	if err := c.setSignalToDirectChildOnly(prefix); err != nil {
 		return err
 	}
 
