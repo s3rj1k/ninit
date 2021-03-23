@@ -6,12 +6,14 @@ import "os"
 // https://github.com/golang/go/wiki/SliceTricks#filter-in-place
 func Filter(a []os.Signal, keep func(x os.Signal) bool) []os.Signal {
 	n := 0
+
 	for _, x := range a {
 		if keep(x) {
 			a[n] = x
 			n++
 		}
 	}
+
 	a = a[:n]
 
 	return a

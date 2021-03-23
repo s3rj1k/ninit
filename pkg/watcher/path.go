@@ -1,4 +1,4 @@
-package watch
+package watcher
 
 import (
 	"context"
@@ -20,13 +20,6 @@ import (
 	Here's a .NET Core implementation: https://github.com/fbeltrao/ConfigMapFileProvider
 	It'll be slower than the aforementioned approach but it covers more ground.
 */
-
-// Message describes output from watch.Path function.
-type Message struct {
-	IsChanged bool
-	Error     error
-	Message   string
-}
 
 // Path runs changes watcher for specified path using fast recursive file hashing.
 func Path(ctx context.Context, wg *sync.WaitGroup, path string, interval time.Duration) <-chan Message {
@@ -51,7 +44,7 @@ func Path(ctx context.Context, wg *sync.WaitGroup, path string, interval time.Du
 		initialHash, err := hash.FromPath(path)
 		if err != nil {
 			ch <- Message{
-				Error: fmt.Errorf("hash compute error, path '%s': %w", path, err),
+				Error: err,
 			}
 		}
 
@@ -61,6 +54,7 @@ func Path(ctx context.Context, wg *sync.WaitGroup, path string, interval time.Du
 				ch <- Message{
 					Message: fmt.Sprintf("path '%s' watch is shutting down", path),
 				}
+
 				return
 
 			case <-ticker.C:

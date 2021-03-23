@@ -11,24 +11,19 @@ import (
 	"github.com/s3rj1k/ninit/pkg/version"
 )
 
-func init() {
-	if !config.IsHelpFlag() {
-		return // return to main flow when no help was asked
+func main() {
+	if config.IsHelpFlag() {
+		fmt.Println( //nolint: forbidigo // print help and exit
+			config.Help(
+				config.DefaultEnvPrefix,
+				config.GetApplicationName(),
+				version.GetVersion(),
+				version.GetBuildTime(),
+			),
+		)
+		os.Exit(0)
 	}
 
-	// print help to stdout and exit
-	fmt.Println(
-		config.Help(
-			config.DefaultEnvPrefix,
-			config.GetApplicationName(),
-			version.GetVersion(),
-			version.GetBuildTime(),
-		),
-	)
-	os.Exit(0)
-}
-
-func main() {
 	c := config.New(
 		logger.Create(
 			config.DefaultLogPrefix,

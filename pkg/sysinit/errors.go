@@ -1,6 +1,7 @@
 package sysinit
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -10,7 +11,9 @@ func GetErrorMessage(err error) string {
 		return ""
 	}
 
-	if exitErr, ok := err.(*exec.ExitError); ok {
+	var exitErr *exec.ExitError
+
+	if errors.As(err, &exitErr) {
 		return fmt.Sprintf("command exited with code: %d, %v", exitErr.ExitCode(), err)
 	}
 

@@ -24,7 +24,7 @@ func getListOfFilesFromPath(path string) ([]string, error) {
 
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, err //nolint: wrapcheck // error is wrapped in exported function
 	}
 
 	sort.Strings(files)

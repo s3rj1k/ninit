@@ -17,27 +17,28 @@ import (
 const (
 	DefaultEnvPrefix = "INIT_"
 	DefaultLogPrefix = "init "
+
+	nanosecondsInSeconds          = 1000 * 1000 * 1000
+	defaultWatchIntervalInSeconds = 3
 )
 
 // Config contains application configuration.
 type Config struct {
-	CommandPath   string
-	WatchPath     string
-	WorkDirectory string
+	Log logger.Logger // package level logger
 
-	SignalToDirectChildOnly bool // to PID instead of PGID
-	ReloadSignalToPGID      bool
+	EnvPrefix string // contains application specific prefix for environment variables
+
+	WatchPath string
+
+	CommandPath   string
+	WorkDirectory string
+	CommandArgs   []string
 
 	ReloadSignal  syscall.Signal
 	WatchInterval time.Duration
 
-	CommandArgs []string
-
-	// contains application specific prefix for environment variables
-	EnvPrefix string
-
-	// package level logger
-	Log logger.Logger
+	SignalToDirectChildOnly bool
+	ReloadSignalToPGID      bool
 }
 
 // Help prints user-friendly help with available configuration options.
@@ -48,7 +49,7 @@ func Help(prefix, name, version, buildTime string) string {
 		Version: %VERSION%
 		Build Time: %BUILD_TIME%
 
-	Avaliable envars configuration options:
+	Available envars configuration options:
 		- %PREFIX%COMMAND_PATH
 				path to executable [required]
 		- %PREFIX%COMMAND_ARGS
@@ -68,6 +69,7 @@ func Help(prefix, name, version, buildTime string) string {
 		- %PREFIX%WATCH_PATH
 				file or directory path to watch (type: pulling) file changes recursevely
 	`
+
 	if name == "" {
 		name = GetApplicationName()
 	}
@@ -185,9 +187,9 @@ func (c *Config) setCommandArgs(prefix string) error {
 func (c *Config) setWatchInterval(prefix string) error {
 	env := prefix + "WATCH_INTERVAL"
 	val := os.Getenv(env)
+
 	if strings.TrimSpace(val) == "" {
-		// c.WatchInterval, _ = time.ParseDuration("3s")
-		c.WatchInterval = 3 * 1000 * 1000 * 1000 // 3 seconds in nanoseconds
+		c.WatchInterval = defaultWatchIntervalInSeconds * nanosecondsInSeconds
 
 		return nil
 	}
@@ -230,6 +232,7 @@ func (c *Config) setSignalToDirectChildOnly(prefix string) error {
 func (c *Config) setReloadSignal(prefix string) error {
 	env := prefix + "RELOAD_SIGNAL"
 	val := os.Getenv(env)
+
 	if strings.TrimSpace(val) == "" {
 		c.ReloadSignal = syscall.SIGHUP
 
@@ -238,7 +241,7 @@ func (c *Config) setReloadSignal(prefix string) error {
 
 	sig, err := signals.Parse(val)
 	if err != nil {
-		return fmt.Errorf("%s: %v", env, err)
+		return fmt.Errorf("%s: %w", env, err)
 	}
 
 	c.ReloadSignal = sig
@@ -274,27 +277,30 @@ func (c *Config) Get(prefix string) error {
 	if err := c.setCommandPath(prefix); err != nil {
 		return err
 	}
+
 	if err := c.setCommandArgs(prefix); err != nil {
 		return err
 	}
+
 	if err := c.setWorkingDirectory(prefix); err != nil {
 		return err
 	}
+
 	if err := c.setWatchPath(prefix); err != nil {
 		return err
 	}
+
 	if err := c.setWatchInterval(prefix); err != nil {
 		return err
 	}
+
 	if err := c.setReloadSignal(prefix); err != nil {
 		return err
 	}
+
 	if err := c.setReloadSignalToPGID(prefix); err != nil {
 		return err
 	}
-	if err := c.setSignalToDirectChildOnly(prefix); err != nil {
-		return err
-	}
 
-	return nil
+	return c.setSignalToDirectChildOnly(prefix)
 }

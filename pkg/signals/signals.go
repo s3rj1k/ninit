@@ -10,7 +10,7 @@ import (
 // https://golang.org/pkg/syscall/
 
 // Parse matches signal name (number) to internal type.
-func Parse(sig string) (syscall.Signal, error) {
+func Parse(sig string) (syscall.Signal, error) { //nolint: cyclop // to avoid using big map
 	switch strings.ToUpper(strings.TrimSpace(sig)) {
 	case "1", "SIGHUP", "HUP":
 		return syscall.SIGHUP, nil
@@ -80,7 +80,7 @@ func Parse(sig string) (syscall.Signal, error) {
 }
 
 // All is a convinience variable that contains all known signals exactly once.
-var All = []os.Signal{
+var All = []os.Signal{ //nolint: gochecknoglobals // list of Linux signals
 	syscall.SIGHUP,    // "1", "SIGHUP"
 	syscall.SIGINT,    // "2", "SIGINT"
 	syscall.SIGQUIT,   // "3", "SIGQUIT"

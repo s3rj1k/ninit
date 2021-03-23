@@ -2,7 +2,6 @@ package reaper
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -10,11 +9,7 @@ import (
 	"time"
 )
 
-// Message describes output from reaper.Path function.
-type Message struct {
-	Error   error
-	Message string
-}
+const cooldownTime = 250 * time.Millisecond
 
 // Run starts goroutine that will reap zombie processes when appropriate signal is sent.
 func Run(ctx context.Context, wg *sync.WaitGroup) <-chan Message {
@@ -40,35 +35,17 @@ func Run(ctx context.Context, wg *sync.WaitGroup) <-chan Message {
 				return
 			case <-notify:
 				for {
-					var status syscall.WaitStatus
+					msg, ok := syscallWait()
+					if msg != nil {
+						ch <- *msg
+					}
 
-					// wait for orphaned zombie process
-					// https://man7.org/linux/man-pages/man2/wait.2.html
-					pid, err := syscall.Wait4(-1, &status, syscall.WNOHANG|syscall.WCONTINUED, nil)
-
-					if syscall.ECHILD == err {
-						// no un-reaped child(ren) exist
-						ch <- Message{
-							Message: "reaper cleanup: no (more) zombies found",
-						}
-
+					if ok {
 						break
 					}
 
-					switch {
-					case pid == 0:
-						// one or more child(ren) exist that have not yet changed state
-						time.Sleep(250 * time.Millisecond)
-					case pid == -1:
-						// error from syscall
-						ch <- Message{
-							Error: fmt.Errorf("reaper error: %w", err),
-						}
-					case pid > 0:
-						// child was reaped
-						ch <- Message{
-							Message: fmt.Sprintf("reaper cleanup: pid=%d, status=%+v", pid, status),
-						}
+					if msg == nil {
+						time.Sleep(cooldownTime)
 					}
 
 					select {

@@ -11,6 +11,7 @@ func IsHelpFlag() bool {
 		(os.Args[1] == "-h" || os.Args[1] == "--help") {
 		return true
 	}
+
 	return false
 }
 
