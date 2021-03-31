@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/s3rj1k/ninit/pkg/capitalise"
 )
 
 // Standart is a package level logger.
@@ -72,7 +74,7 @@ func (l *Standart) Tracef(format string, args ...interface{}) {
 		panic("trace logger undefined")
 	}
 
-	if err := l.TraceLevel.Output(callDepth, fmt.Sprintf(format, args...)); err != nil {
+	if err := l.TraceLevel.Output(callDepth, capitalise.First(fmt.Sprintf(format, args...))); err != nil {
 		panic(err)
 	}
 }
@@ -87,7 +89,7 @@ func (l *Standart) Debugf(format string, args ...interface{}) {
 		panic("debug logger undefined")
 	}
 
-	if err := l.DebugLevel.Output(callDepth, fmt.Sprintf(format, args...)); err != nil {
+	if err := l.DebugLevel.Output(callDepth, capitalise.First(fmt.Sprintf(format, args...))); err != nil {
 		panic(err)
 	}
 }
@@ -102,7 +104,7 @@ func (l *Standart) Infof(format string, args ...interface{}) {
 		panic("info logger undefined")
 	}
 
-	if err := l.InfoLevel.Output(callDepth, fmt.Sprintf(format, args...)); err != nil {
+	if err := l.InfoLevel.Output(callDepth, capitalise.First(fmt.Sprintf(format, args...))); err != nil {
 		panic(err)
 	}
 }
@@ -117,7 +119,7 @@ func (l *Standart) Warnf(format string, args ...interface{}) {
 		panic("warn logger undefined")
 	}
 
-	if err := l.WarnLevel.Output(callDepth, fmt.Sprintf(format, args...)); err != nil {
+	if err := l.WarnLevel.Output(callDepth, capitalise.First(fmt.Sprintf(format, args...))); err != nil {
 		panic(err)
 	}
 }
@@ -132,12 +134,12 @@ func (l *Standart) Errorf(format string, args ...interface{}) {
 		panic("error logger undefined")
 	}
 
-	if err := l.ErrorLevel.Output(callDepth, fmt.Sprintf(format, args...)); err != nil {
+	if err := l.ErrorLevel.Output(callDepth, capitalise.First(fmt.Sprintf(format, args...))); err != nil {
 		panic(err)
 	}
 }
 
-//revive:disable:deep-exit
+//revive:disable:deep-exit // Fatalf LogLevel needs to call `os.Exit()`.
 
 // Fatal is a fatal level logger.
 func (l *Standart) Fatalf(format string, args ...interface{}) {
@@ -149,14 +151,14 @@ func (l *Standart) Fatalf(format string, args ...interface{}) {
 		panic("fatal logger undefined")
 	}
 
-	if err := l.FatalLevel.Output(callDepth, fmt.Sprintf(format, args...)); err != nil {
+	if err := l.FatalLevel.Output(callDepth, capitalise.First(fmt.Sprintf(format, args...))); err != nil {
 		panic(err)
 	}
 
 	os.Exit(1)
 }
 
-//revive:disable:deep-exit
+//revive:enable:deep-exit
 
 // Panic is a panic level logger.
 func (l *Standart) Panicf(format string, args ...interface{}) {
@@ -168,7 +170,7 @@ func (l *Standart) Panicf(format string, args ...interface{}) {
 		panic("panic logger undefined")
 	}
 
-	s := fmt.Sprintf(format, args...)
+	s := capitalise.First(fmt.Sprintf(format, args...))
 
 	if err := l.PanicLevel.Output(callDepth, s); err != nil {
 		panic(err)

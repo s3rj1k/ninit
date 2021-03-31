@@ -3,17 +3,18 @@ package reaper
 import (
 	"errors"
 	"fmt"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 func syscallWait() (*Message, bool) {
-	var status syscall.WaitStatus
+	var status unix.WaitStatus
 
 	// wait for orphaned zombie process
 	// https://man7.org/linux/man-pages/man2/wait.2.html
-	pid, err := syscall.Wait4(-1, &status, syscall.WNOHANG|syscall.WCONTINUED, nil)
+	pid, err := unix.Wait4(-1, &status, unix.WNOHANG|unix.WCONTINUED, nil)
 
-	if errors.Is(err, syscall.ECHILD) {
+	if errors.Is(err, unix.ECHILD) {
 		// no un-reaped child(ren) exist
 		return &Message{
 			Message: "reaper cleanup: no (more) zombies found",

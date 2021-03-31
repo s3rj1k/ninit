@@ -5,35 +5,35 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 
-	"github.com/s3rj1k/ninit/pkg/config"
+	"github.com/s3rj1k/ninit/pkg/logger"
 	"github.com/s3rj1k/ninit/pkg/utils"
+	"golang.org/x/sys/unix"
 )
 
-func configureExecCMD(ctx context.Context, c *config.Config) *exec.Cmd {
+func configureExecCMD(ctx context.Context, c Config, _ logger.Logger) *exec.Cmd {
 	cmd := exec.CommandContext( //nolint: gosec // executing command passed from config
 		ctx,
-		c.CommandPath,
-		c.CommandArgs...,
+		c.GetCommandPath(),
+		c.GetCommandArgs()...,
 	)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	if c.WorkDirectory != "" {
-		cmd.Dir = c.WorkDirectory
+	if c.GetWorkDirectory() != "" {
+		cmd.Dir = c.GetWorkDirectory()
 	}
 
 	cmd.Env = utils.FilterStringSlice(
 		os.Environ(),
 		func(x string) bool {
-			return !strings.HasPrefix(x, c.EnvPrefix)
+			return !strings.HasPrefix(x, c.GetEnvPrefix())
 		},
 	)
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{
+	cmd.SysProcAttr = &unix.SysProcAttr{
 		// create a dedicated pidgroup for signal forwarding
 		Setpgid: true,
 	}
