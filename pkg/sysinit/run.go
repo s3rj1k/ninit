@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"sync"
 
-	"github.com/s3rj1k/ninit/pkg/logger"
+	"github.com/s3rj1k/ninit/pkg/log/logger"
 	"github.com/s3rj1k/ninit/pkg/reaper"
 	"github.com/s3rj1k/ninit/pkg/signals"
 	"github.com/s3rj1k/ninit/pkg/watcher"

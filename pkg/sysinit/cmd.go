@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/s3rj1k/ninit/pkg/logger"
+	"github.com/s3rj1k/ninit/pkg/log/logger"
 	"github.com/s3rj1k/ninit/pkg/utils"
 	"golang.org/x/sys/unix"
 )

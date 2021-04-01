@@ -19,6 +19,7 @@ Available envars configuration options:
 			command arguments.
 	- %PREFIX%WORK_DIRECTORY_PATH
 			path to application new current working directory.
+
 	- %PREFIX%RELOAD_SIGNAL
 			OS signal what triggers application config reload [default 'SIGHUP'].
 	- %PREFIX%RELOAD_SIGNAL_TO_PGID
@@ -27,6 +28,7 @@ Available envars configuration options:
 			signals (excluding reload signal) are only forwarded
 			to direct child and not to any of its descendants,
 			meaning signal is sent to PID instead of PGID.
+
 	- %PREFIX%WATCH_INTERVAL
 			watch (type: pulling) time interval [default '3s'].
 	- %PREFIX%WATCH_PATH

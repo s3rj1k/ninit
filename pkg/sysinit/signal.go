@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/s3rj1k/ninit/pkg/logger"
+	"github.com/s3rj1k/ninit/pkg/log/logger"
 	"golang.org/x/sys/unix"
 )
 
