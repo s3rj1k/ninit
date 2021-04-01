@@ -46,13 +46,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	ctx, cancel := context.WithCancel(context.Background())
-
-	defer func(wg *sync.WaitGroup, cancel context.CancelFunc, log *logger.Standart) {
-		cancel()
-		wg.Wait()
-
-		log.Infof("Coroutine cleanup finished\n")
-	}(&wg, cancel, log)
+	defer sysinit.Cleanup(&wg, cancel, log)
 
 	if err := sysinit.Run(ctx, &wg, c, log); err != nil {
 		log.Errorf("%v\n", sysinit.GetErrorMessage(err))

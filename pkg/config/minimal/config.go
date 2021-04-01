@@ -83,7 +83,7 @@ func (c *Config) GetWatchInterval() time.Duration  { return c.watchInterval }
 func (c *Config) GetWatchPath() string             { return c.watchPath }
 func (c *Config) GetWorkDirectory() string         { return c.workDirectory }
 
-// Get reads environment variables to update and validate configuration object, also sets default values when needed.
+// Get reads environment variables to update and validate configuration object.
 func (c *Config) Get() error {
 	if err := c.SetCommandPath("COMMAND_PATH"); err != nil {
 		return err
