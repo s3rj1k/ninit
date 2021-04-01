@@ -5,8 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 const cooldownTime = 250 * time.Millisecond
@@ -19,7 +20,7 @@ func Run(ctx context.Context, wg *sync.WaitGroup) <-chan Message {
 
 	go func(ctx context.Context, ch chan<- Message) {
 		notify := make(chan os.Signal, 1)
-		signal.Notify(notify, syscall.SIGCHLD)
+		signal.Notify(notify, unix.SIGCHLD)
 
 		defer func(wg *sync.WaitGroup, notify chan<- os.Signal, ch chan<- Message) {
 			// defer inside goroutine works because we return when context is done

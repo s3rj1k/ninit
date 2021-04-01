@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
 )
 
@@ -10,6 +12,24 @@ const (
 	otherBit = 0001
 	allBits  = 0111
 )
+
+// GetMode return `fs.FileMode` object or error for specified path.
+func GetMode(path string) (fs.FileMode, error) {
+	info, err := os.Lstat(path)
+	if os.IsPermission(err) {
+		return 0, fmt.Errorf("path '%s' access denied", path)
+	}
+
+	if os.IsNotExist(err) {
+		return 0, fmt.Errorf("path '%s' does not exist", path)
+	}
+
+	if info == nil {
+		return 0, fmt.Errorf("path '%s' is not valid", path)
+	}
+
+	return info.Mode(), nil
+}
 
 // IsExecOwner returns true when filemode has exec owner bit set.
 func IsExecOwner(mode os.FileMode) bool {
