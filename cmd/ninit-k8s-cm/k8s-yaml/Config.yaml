@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+data:
+  include.conf: |2
+    bind-interfaces
+    dhcp-range=169.254.1.0,169.254.1.255
+    keep-in-foreground
+    log-dhcp
+    no-hosts
+    no-poll
+    port=0
+    user=root
+
+kind: ConfigMap
+metadata:
+  name: dnsmasq-dynamic-config
+  namespace: default
+
+---
+apiVersion: v1
+data:
+  dnsmasq.conf: |2
+    conf-dir=/etc/k8s.d/,*.conf
+
+kind: ConfigMap
+metadata:
+  name: dnsmasq-config
+  namespace: default

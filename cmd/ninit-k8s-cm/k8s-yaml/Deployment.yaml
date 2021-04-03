@@ -1,0 +1,59 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dnsmasq
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dnsmasq
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dnsmasq
+    spec:
+      serviceAccountName: ninit
+      volumes:
+        - name: dnsmasq-config
+          configMap:
+            name: dnsmasq-config
+            defaultMode: 448
+      containers:
+        - name: dhcpd
+          env:
+            - name: INIT_COMMAND_PATH
+              value: /usr/sbin/dnsmasq
+            - name: INIT_COMMAND_ARGS
+              value: '-C /etc/dnsmasq.conf'
+            - name: INIT_WATCH_INTERVAL
+              value: 1s
+            - name: INIT_RELOAD_SIGNAL
+              value: SIGHUP
+            - name: INIT_RELOAD_SIGNAL_TO_PGID
+              value: 'true'
+            - name: INIT_SIGNAL_TO_DIRECT_CHILD_ONLY
+              value: 'false'
+            - name: INIT_WATCH_PATH
+              value: /etc/k8s.d/
+            - name: INIT_K8S_BASE_DIRECTORY_PATH
+              value: /etc/k8s.d/
+            - name: INIT_K8S_NAMESPACE
+              value: default
+            - name: INIT_K8S_CONFIG_MAP_NAME
+              value: dnsmasq-dynamic-config
+          command:
+            - /ninit-k8s-cm
+          image: 'IMAGE_URL'
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dnsmasq-config
+              mountPath: /etc/dnsmasq.conf
+              subPath: dnsmasq.conf
+      hostNetwork: false
+      restartPolicy: Always
