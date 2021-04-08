@@ -23,9 +23,9 @@ Available envars configuration options:
 	- %PREFIX%RELOAD_SIGNAL
 			OS signal what triggers application config reload [default 'SIGHUP'].
 	- %PREFIX%RELOAD_SIGNAL_TO_PGID
-			send reload signal to PGID instead of PID.
+			boolean, send reload signal to PGID instead of PID.
 	- %PREFIX%SIGNAL_TO_DIRECT_CHILD_ONLY
-			signals (excluding reload signal) are only forwarded
+			boolean, signals (excluding reload signal) are only forwarded
 			to direct child and not to any of its descendants,
 			meaning signal is sent to PID instead of PGID.
 
@@ -33,6 +33,9 @@ Available envars configuration options:
 			watch (type: pulling) time interval [default '3s'].
 	- %PREFIX%WATCH_PATH
 			file or directory path to watch (type: pulling) file changes recursevely.
+
+	- %PREFIX%VERBOSE_LOGGING
+			boolean, enables verbose logginig, enable only for debugging purposes. 
 `
 
 // Redefine defaults from shared package for convenient importing.
@@ -56,6 +59,8 @@ type Config struct {
 
 	signalToDirectChildOnly bool
 	reloadSignalToPGID      bool
+
+	verboseLogging bool
 }
 
 // New creates new config with defaul values.
@@ -81,6 +86,7 @@ func (c *Config) GetEnvPrefix() string             { return c.envPrefix }
 func (c *Config) GetReloadSignal() unix.Signal     { return c.reloadSignal }
 func (c *Config) GetReloadSignalToPGID() bool      { return c.reloadSignalToPGID }
 func (c *Config) GetSignalToDirectChildOnly() bool { return c.signalToDirectChildOnly }
+func (c *Config) GetVerboseLogging() bool          { return c.verboseLogging }
 func (c *Config) GetWatchInterval() time.Duration  { return c.watchInterval }
 func (c *Config) GetWatchPath() string             { return c.watchPath }
 func (c *Config) GetWorkDirectory() string         { return c.workDirectory }
@@ -115,7 +121,11 @@ func (c *Config) Get() error {
 		return err
 	}
 
-	return c.SetSignalToDirectChildOnly("SIGNAL_TO_DIRECT_CHILD_ONLY")
+	if err := c.SetSignalToDirectChildOnly("SIGNAL_TO_DIRECT_CHILD_ONLY"); err != nil {
+		return err
+	}
+
+	return c.SetVerboseLogging("VERBOSE_LOGGING")
 }
 
 // SetCommandPath reads command path from environ and updates its value inside config.
@@ -288,6 +298,31 @@ func (c *Config) SetReloadSignal(env string) error {
 	}
 
 	c.reloadSignal, _ = signals.Parse(val)
+
+	return nil
+}
+
+// SetVerboseLogging reads bool value from environ and updates its value inside config.
+func (c *Config) SetVerboseLogging(env string) error {
+	env = c.envPrefix + env
+
+	val, ok, err := shared.LookupEnvValue(env)
+	if err != nil {
+		return err //nolint: wrapcheck // error string formed in external package is styled correctly
+	}
+
+	if !ok {
+		return nil
+	}
+
+	err = validate.Bool(val)
+	if err != nil {
+		return fmt.Errorf("%s: %w", env, err)
+	}
+
+	if strings.EqualFold(val, "true") {
+		c.verboseLogging = true
+	}
 
 	return nil
 }

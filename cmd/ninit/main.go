@@ -18,7 +18,7 @@ func main() {
 		os.Stdout,
 		config.DefaultLogPrefix,
 		standart.DefaultFlags, // for debug purposes can be set to: 'log.Lmsgprefix | log.Lshortfile | log.Lmsgprefix'
-		logger.DebugLevelLog,
+		logger.InfoLevelLog,
 	)
 
 	c := config.New(
@@ -43,6 +43,10 @@ func main() {
 
 	if err := c.Get(); err != nil {
 		log.Fatalf("%v\n", err)
+	}
+
+	if c.GetVerboseLogging() {
+		log.SetLevel(logger.TraceLevelLog)
 	}
 
 	var wg sync.WaitGroup
