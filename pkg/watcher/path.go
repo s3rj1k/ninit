@@ -2,12 +2,9 @@ package watcher
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/s3rj1k/ninit/pkg/hash"
 )
 
 /*
@@ -22,7 +19,7 @@ import (
 */
 
 // Path runs changes watcher for specified path using fast recursive file hashing.
-func Path(ctx context.Context, wg *sync.WaitGroup, path string, interval time.Duration) <-chan Message {
+func Path(ctx context.Context, wg *sync.WaitGroup, path string, interval time.Duration, pause <-chan bool) <-chan Message {
 	if strings.TrimSpace(path) == "" || interval == 0 {
 		return nil
 	}
@@ -31,53 +28,7 @@ func Path(ctx context.Context, wg *sync.WaitGroup, path string, interval time.Du
 
 	wg.Add(1)
 
-	go func(ctx context.Context, ch chan<- Message, path string, interval time.Duration) {
-		ticker := time.NewTicker(interval)
-
-		defer func(wg *sync.WaitGroup, ch chan<- Message, ticker *time.Ticker) {
-			// defer inside goroutine works because we return when context is done
-			ticker.Stop()
-			close(ch)
-			wg.Done()
-		}(wg, ch, ticker)
-
-		initialHash, err := hash.FromPath(path)
-		if err != nil {
-			ch <- Message{
-				Error: err,
-			}
-		}
-
-		for {
-			select {
-			case <-ctx.Done():
-				ch <- Message{
-					Message: fmt.Sprintf("path '%s' watch is shutting down", path),
-				}
-
-				return
-
-			case <-ticker.C:
-				currentHash, err := hash.FromPath(path)
-				if err != nil {
-					ch <- Message{
-						Error: fmt.Errorf("hash compute error, path '%s': %w", path, err),
-					}
-
-					continue
-				}
-
-				if currentHash != initialHash {
-					ch <- Message{
-						IsChanged: true,
-						Message:   fmt.Sprintf("path '%s' change detected", path),
-					}
-
-					initialHash = currentHash
-				}
-			}
-		}
-	}(ctx, msg, path, interval)
+	go worker(ctx, wg, msg, path, interval, pause)
 
 	return msg
 }

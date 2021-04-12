@@ -50,6 +50,8 @@ type Config struct {
 
 	watchPath string
 
+	pause chan bool // pause path watching
+
 	commandPath   string
 	workDirectory string
 	commandArgs   []string
@@ -69,6 +71,7 @@ func New(prefix string) *Config {
 		envPrefix:     prefix,
 		reloadSignal:  unix.SIGHUP,
 		watchInterval: shared.DefaultWatchIntervalInSeconds * shared.NanosecondsInSeconds,
+		pause:         make(chan bool, 1),
 	}
 }
 
@@ -83,6 +86,7 @@ func (*Config) GetDescriptionBody() string  { return DescriptionBody }
 func (c *Config) GetCommandArgs() []string         { return c.commandArgs }
 func (c *Config) GetCommandPath() string           { return c.commandPath }
 func (c *Config) GetEnvPrefix() string             { return c.envPrefix }
+func (c *Config) GetPauseChannel() chan bool       { return c.pause }
 func (c *Config) GetReloadSignal() unix.Signal     { return c.reloadSignal }
 func (c *Config) GetReloadSignalToPGID() bool      { return c.reloadSignalToPGID }
 func (c *Config) GetSignalToDirectChildOnly() bool { return c.signalToDirectChildOnly }

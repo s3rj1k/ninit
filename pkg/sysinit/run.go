@@ -40,7 +40,7 @@ func Run(ctx context.Context, wg *sync.WaitGroup, c Config, log logger.Logger) e
 
 	log.Infof("started process '%v' with PID '%d'\n", cmd.String(), cmd.Process.Pid)
 
-	watch := watcher.Path(ctx, wg, c.GetWatchPath(), c.GetWatchInterval())
+	watch := watcher.Path(ctx, wg, c.GetWatchPath(), c.GetWatchInterval(), c.GetPauseChannel())
 	reap := reaper.Run(ctx, wg)
 
 	wg.Add(1)
