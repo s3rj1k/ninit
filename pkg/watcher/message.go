@@ -1,6 +1,9 @@
 package watcher
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // Message describes output from Path function.
 type Message struct {
@@ -21,10 +24,10 @@ func resumed(path string) Message {
 	}
 }
 
-func change(path string) Message {
+func change(path string, delta time.Duration) Message {
 	return Message{
 		IsChanged: true,
-		Message:   fmt.Sprintf("path '%s' change detected", path),
+		Message:   fmt.Sprintf("path '%s' change detected (%v)", path, delta),
 	}
 }
 

@@ -43,6 +43,8 @@ func worker(ctx context.Context, wg *sync.WaitGroup, ch chan<- Message, path str
 				continue
 			}
 
+			t1 := time.Now()
+
 			currentHash, err := hash.FromPath(path)
 			if err != nil {
 				ch <- hashError(path, err)
@@ -50,8 +52,10 @@ func worker(ctx context.Context, wg *sync.WaitGroup, ch chan<- Message, path str
 				continue
 			}
 
+			t2 := time.Now()
+
 			if currentHash != initialHash {
-				ch <- change(path)
+				ch <- change(path, t2.Sub(t1))
 
 				initialHash = currentHash
 			}
