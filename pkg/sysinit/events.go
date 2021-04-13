@@ -30,7 +30,7 @@ func signalEvent(c Config, log logger.Logger, sig os.Signal, cmd *exec.Cmd) {
 	log.Debugf("sent '%v' signal to PID '%d'\n", sig, -cmd.Process.Pid) // can be very verbose
 }
 
-func watcherEvent(c Config, log logger.Logger, v watcher.Message, cmd *exec.Cmd) {
+func watcherEvent(c Config, log logger.Logger, v watcher.Message, cmd, preReloadCmd *exec.Cmd) {
 	if v.Error != nil {
 		log.Errorf("%v\n", v.Error)
 	}
@@ -43,6 +43,16 @@ func watcherEvent(c Config, log logger.Logger, v watcher.Message, cmd *exec.Cmd)
 		pid := cmd.Process.Pid
 		if c.GetReloadSignalToPGID() {
 			pid = -cmd.Process.Pid
+		}
+
+		if preReloadCmd != nil {
+			log.Debugf("pre-reload command defined: %s\n", preReloadCmd.String())
+
+			if err := preReloadCmd.Run(); err != nil {
+				log.Errorf("failed to send '%v' signal, pre-reload command failed: %v\n", c.GetReloadSignal(), err)
+
+				return
+			}
 		}
 
 		sendSignal(log, pid, c.GetReloadSignal())

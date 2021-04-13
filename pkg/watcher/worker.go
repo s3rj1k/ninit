@@ -8,8 +8,15 @@ import (
 	"github.com/s3rj1k/ninit/pkg/hash"
 )
 
-func worker(ctx context.Context, wg *sync.WaitGroup, ch chan<- Message, path string, interval time.Duration, pause <-chan bool) {
-	ticker := time.NewTicker(interval)
+type workerConfig struct {
+	ch       chan<- Message
+	pause    <-chan bool
+	path     string
+	interval time.Duration
+}
+
+func worker(ctx context.Context, wg *sync.WaitGroup, wc *workerConfig) {
+	ticker := time.NewTicker(wc.interval)
 	ignoreTicks := false
 
 	defer func(wg *sync.WaitGroup, ch chan<- Message, ticker *time.Ticker) {
@@ -17,25 +24,25 @@ func worker(ctx context.Context, wg *sync.WaitGroup, ch chan<- Message, path str
 		ticker.Stop()
 		close(ch)
 		wg.Done()
-	}(wg, ch, ticker)
+	}(wg, wc.ch, ticker)
 
-	initialHash, err := hash.FromPath(path)
+	initialHash, err := hash.FromPath(wc.path)
 	if err != nil {
-		ch <- hashError(path, err)
+		wc.ch <- hashError(wc.path, err)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			ch <- shutdown(path)
+			wc.ch <- shutdown(wc.path)
 
 			return
 
-		case ignoreTicks = <-pause:
+		case ignoreTicks = <-wc.pause:
 			if ignoreTicks {
-				ch <- paused(path)
+				wc.ch <- paused(wc.path)
 			} else {
-				ch <- resumed(path)
+				wc.ch <- resumed(wc.path)
 			}
 
 		case <-ticker.C:
@@ -45,9 +52,9 @@ func worker(ctx context.Context, wg *sync.WaitGroup, ch chan<- Message, path str
 
 			t1 := time.Now()
 
-			currentHash, err := hash.FromPath(path)
+			currentHash, err := hash.FromPath(wc.path)
 			if err != nil {
-				ch <- hashError(path, err)
+				wc.ch <- hashError(wc.path, err)
 
 				continue
 			}
@@ -55,7 +62,7 @@ func worker(ctx context.Context, wg *sync.WaitGroup, ch chan<- Message, path str
 			t2 := time.Now()
 
 			if currentHash != initialHash {
-				ch <- change(path, t2.Sub(t1))
+				wc.ch <- change(wc.path, t2.Sub(t1))
 
 				initialHash = currentHash
 			}

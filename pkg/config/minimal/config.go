@@ -20,6 +20,13 @@ Available envars configuration options:
 	- %PREFIX%WORK_DIRECTORY_PATH
 			path to application new current working directory.
 
+	- %PREFIX%PRE_RELOAD_COMMAND_PATH
+			path to executable that is going to be run before
+			sending reload signal, signal will be sent
+			only on successful run of pre-reload command.
+	- %PREFIX%PRE_RELOAD_COMMAND_ARGS
+			pre-reload command arguments.
+
 	- %PREFIX%RELOAD_SIGNAL
 			OS signal what triggers application config reload [default 'SIGHUP'].
 	- %PREFIX%RELOAD_SIGNAL_TO_PGID
@@ -52,9 +59,11 @@ type Config struct {
 
 	pause chan bool // pause path watching
 
-	commandPath   string
-	workDirectory string
-	commandArgs   []string
+	workDirectory        string
+	commandPath          string
+	preReloadCommandPath string
+	commandArgs          []string
+	preReloadCommandArgs []string
 
 	reloadSignal  unix.Signal
 	watchInterval time.Duration
@@ -83,25 +92,35 @@ func (*Config) GetDefaultEnvPrefix() string { return shared.DefaultEnvPrefix }
 func (*Config) GetDefaultLogPrefix() string { return shared.DefaultLogPrefix }
 func (*Config) GetDescriptionBody() string  { return DescriptionBody }
 
-func (c *Config) GetCommandArgs() []string         { return c.commandArgs }
-func (c *Config) GetCommandPath() string           { return c.commandPath }
-func (c *Config) GetEnvPrefix() string             { return c.envPrefix }
-func (c *Config) GetPauseChannel() chan bool       { return c.pause }
-func (c *Config) GetReloadSignal() unix.Signal     { return c.reloadSignal }
-func (c *Config) GetReloadSignalToPGID() bool      { return c.reloadSignalToPGID }
-func (c *Config) GetSignalToDirectChildOnly() bool { return c.signalToDirectChildOnly }
-func (c *Config) GetVerboseLogging() bool          { return c.verboseLogging }
-func (c *Config) GetWatchInterval() time.Duration  { return c.watchInterval }
-func (c *Config) GetWatchPath() string             { return c.watchPath }
-func (c *Config) GetWorkDirectory() string         { return c.workDirectory }
+func (c *Config) GetCommandArgs() []string          { return c.commandArgs }
+func (c *Config) GetCommandPath() string            { return c.commandPath }
+func (c *Config) GetEnvPrefix() string              { return c.envPrefix }
+func (c *Config) GetPauseChannel() chan bool        { return c.pause }
+func (c *Config) GetPreReloadCommandArgs() []string { return c.preReloadCommandArgs }
+func (c *Config) GetPreReloadCommandPath() string   { return c.preReloadCommandPath }
+func (c *Config) GetReloadSignal() unix.Signal      { return c.reloadSignal }
+func (c *Config) GetReloadSignalToPGID() bool       { return c.reloadSignalToPGID }
+func (c *Config) GetSignalToDirectChildOnly() bool  { return c.signalToDirectChildOnly }
+func (c *Config) GetVerboseLogging() bool           { return c.verboseLogging }
+func (c *Config) GetWatchInterval() time.Duration   { return c.watchInterval }
+func (c *Config) GetWatchPath() string              { return c.watchPath }
+func (c *Config) GetWorkDirectory() string          { return c.workDirectory }
 
 // Get reads environment variables to update and validate configuration object.
-func (c *Config) Get() error {
+func (c *Config) Get() error { //nolint: cyclop // although cyclomatic complexity is high, function is readable due to similar setter calls
 	if err := c.SetCommandPath("COMMAND_PATH"); err != nil {
 		return err
 	}
 
 	if err := c.SetCommandArgs("COMMAND_ARGS"); err != nil {
+		return err
+	}
+
+	if err := c.SetPreReloadCommandPath("PRE_RELOAD_COMMAND_PATH"); err != nil {
+		return err
+	}
+
+	if err := c.SetPreReloadCommandArgs("PRE_RELOAD_COMMAND_ARGS"); err != nil {
 		return err
 	}
 
@@ -327,6 +346,42 @@ func (c *Config) SetVerboseLogging(env string) error {
 	if strings.EqualFold(val, "true") {
 		c.verboseLogging = true
 	}
+
+	return nil
+}
+
+// SetPreReloadCommandPath reads pre-reload command path from environ and updates its value inside config.
+func (c *Config) SetPreReloadCommandPath(env string) error {
+	env = c.envPrefix + env
+
+	val, ok, err := shared.LookupEnvValue(env)
+	if err != nil {
+		return err //nolint: wrapcheck // error string formed in external package is styled correctly
+	}
+
+	if !ok {
+		return nil
+	}
+
+	if err := validate.Executable(val); err != nil {
+		return fmt.Errorf("%s: %w", env, err)
+	}
+
+	c.preReloadCommandPath = val
+
+	return nil
+}
+
+// SetPreReloadCommandArgs reads pre-reload command args from environ and updates its value inside config.
+func (c *Config) SetPreReloadCommandArgs(env string) error {
+	env = c.envPrefix + env
+
+	val, _, err := shared.LookupEnvValue(env)
+	if err != nil {
+		return err //nolint: wrapcheck // error string formed in external package is styled correctly
+	}
+
+	c.preReloadCommandArgs = strings.Fields(val)
 
 	return nil
 }

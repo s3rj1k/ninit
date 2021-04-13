@@ -53,7 +53,7 @@ linters-settings:
     rules:
 #      - name: add-constant
       - name: argument-limit
-        arguments: 8
+        arguments: 6
       - name: atomic
       - name: bare-return
       - name: blank-imports

@@ -32,6 +32,7 @@ func Run(ctx context.Context, wg *sync.WaitGroup, c Config, log logger.Logger) e
 	defer signal.Reset()
 
 	cmd := configureExecCMD(ctx, c, log)
+	preReloadCmd := configurePreReloadExecCMD(ctx, c, log)
 
 	if err := cmd.Start(); err != nil {
 		return err //nolint: wrapcheck // error message wrapping is done by `GetErrorMessage(err error) string`
@@ -44,7 +45,15 @@ func Run(ctx context.Context, wg *sync.WaitGroup, c Config, log logger.Logger) e
 
 	wg.Add(1)
 
-	go worker(ctx, wg, c, log, cmd, sigs, watch, reap)
+	go worker(ctx, wg, c, log,
+		&workerConfig{
+			cmd:          cmd,
+			preReloadCmd: preReloadCmd,
+			sigs:         sigs,
+			watch:        watch,
+			reap:         reap,
+		},
+	)
 
 	err := cmd.Wait()
 	log.Infof("finished process '%v' with PID '%d'\n", cmd.String(), cmd.Process.Pid)

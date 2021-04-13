@@ -28,7 +28,14 @@ func Path(ctx context.Context, wg *sync.WaitGroup, path string, interval time.Du
 
 	wg.Add(1)
 
-	go worker(ctx, wg, msg, path, interval, pause)
+	go worker(ctx, wg,
+		&workerConfig{
+			ch:       msg,
+			interval: interval,
+			path:     path,
+			pause:    pause,
+		},
+	)
 
 	return msg
 }

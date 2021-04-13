@@ -18,4 +18,6 @@ type Config interface {
 	GetWatchInterval() time.Duration
 	GetWatchPath() string
 	GetWorkDirectory() string
+	GetPreReloadCommandArgs() []string
+	GetPreReloadCommandPath() string
 }
