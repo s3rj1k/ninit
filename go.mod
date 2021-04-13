@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/minio/highwayhash v1.0.2
 	github.com/s3rj1k/ninit/pkg/log/logger v0.0.0-00010101000000-000000000000
+	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
 	k8s.io/api v0.20.5
 	k8s.io/apimachinery v0.20.5
@@ -72,6 +73,7 @@ replace (
 	github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c => github.com/onsi/gomega v1.7.0
 	github.com/spf13/pflag v0.0.0-20170130214245-9ff6c6923cff => github.com/spf13/pflag v1.0.5
 	github.com/stretchr/objx v0.1.0 => github.com/stretchr/objx v0.2.0
+	github.com/stretchr/testify v1.2.2 => github.com/stretchr/testify v1.6.1
 	github.com/stretchr/testify v1.3.0 => github.com/stretchr/testify v1.6.1
 	github.com/stretchr/testify v1.4.0 => github.com/stretchr/testify v1.6.1
 	go.opencensus.io v0.21.0 => go.opencensus.io v0.22.3
@@ -128,6 +130,7 @@ replace (
 	golang.org/x/sys v0.0.0-20190616124812-15dcb6c0061f => golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
 	golang.org/x/sys v0.0.0-20191001151750-bb3f8db39f24 => golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
 	golang.org/x/sys v0.0.0-20191005200804-aed5e4c7ecf9 => golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
+	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 => golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
 	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e => golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
 	golang.org/x/sys v0.0.0-20200122134326-e047566fdf82 => golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 => golang.org/x/sys v0.0.0-20210326220804-49726bf1d181
